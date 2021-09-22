@@ -1,5 +1,6 @@
 import socket
 import sys
+import os
 
 
 def get_constants(prefix):
@@ -16,6 +17,9 @@ def get_constants(prefix):
 families = get_constants('AF_')
 types = get_constants('SOCK_')
 protocols = get_constants('IPPROTO_')
+
+# Separator
+SEPARATOR = " "
 
 # Create a TCP/IP socket
 #TODO Organizar los puertos y la dircción
@@ -66,7 +70,7 @@ try:
     amount_expected = len(message)
 
     while amount_received < amount_expected:
-        data = sock.recv(16)
+        data = sock.recv(1024)
         amount_received += len(data)
         print('received {!r}'.format(data))
 
