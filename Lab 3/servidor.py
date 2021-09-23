@@ -26,32 +26,42 @@ filename2 = "Archivo2_250MB"
 filesize1 = os.path.getsize(file1)
 filesize2 = os.path.getsize(file2)
 
+#Array vacio de conecciones
+conecciones = [0]*25
+
+#Función envío de archivos
+def archivo(connections, num_archivo):
+    if (num_archivo == 1):
+        for c in connections:
+            c.send(f"{filename1}{SEPARATOR}{filesize1}".encode())
+            with open(file1, "rb") as f:
+                while True:
+                    bytes_read = f.read(1024)
+                    if not bytes_read:
+                        break
+                    c.sendall(bytes_read)
+    elif (num_clientes == 2):
+        for c in connections:
+            c.send(f"{filename2}{SEPARATOR}{filesize2}".encode())
+            with open(file2, "rb") as f:
+                while True:
+                    bytes_read = f.read(1024)
+                    if not bytes_read:
+                        break
+                    c.sendall(bytes_read)
+
 while True:
     print('waiting for a connection')
+    num_archivo = input('¿Qué archivo desea enviar? (1: 100MB, 2: 250MB)')
+    num_clientes = input('¿A cuantos clientes desea enviar el archivo?')
     connection, client_address = sock.accept()
     try:
-        print('client connected:', client_address)
         while True:
             data = connection.recv(1024)
             print('received {!r}'.format(data))
-            if (data==1):
-                connection.send(f"{filename1}{SEPARATOR}{filesize1}".encode())
-                with open(file1, "rb") as f:
-                    while True:
-                        bytes_read = f.read(1024)
-                        if not bytes_read:
-                            break
-                        connection.sendall(bytes_read)
-            elif (data==2):
-                connection.send(f"{filename2}{SEPARATOR}{filesize2}".encode())
-                with open(file2, "rb") as f:
-                    while True:
-                        bytes_read = f.read(1024)
-                        if not bytes_read:
-                            break
-                        connection.sendall(bytes_read)
-            else:
-                break
+            if data == 'Listo para recibir':
+                conecciones.append(connection)
+            if len(conecciones) >= num_clientes:
+                archivo(conecciones, num_archivo)
     finally:
         connection.close()
-
