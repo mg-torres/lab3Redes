@@ -24,7 +24,7 @@ BUFFER_SIZE = 4096 # send 4096 bytes each time step
 
 # Create a TCP/IP socket
 #TODO Organizar los puertos y la dircción
-sock = socket.create_connection(('localhost', 10000))
+sock = socket.create_connection(('localhost', 10002))
 #sock = socket.create_connection(('localhost', 10000))
 #sock = socket.create_connection(('localhost', 10000))
 #sock = socket.create_connection(('localhost', 10000))
@@ -61,63 +61,49 @@ print('Protocol:', protocols[sock.proto])
 print()
 
 
-# input
-#Archivos a enviar
-file1 = "Archivos/Archivo1_100MB.pptx"
-file2 = "Archivos/Archivo2_250MB.pptx"
-
-#Nombre archivos a enviar
-filename1 = "Archivos/Archivo1_100MB.pptx"
-filename2 = "Archivos/Archivo2_250MB.pptx"
-
-#Tamaño de los archivos
-filesize1 = os.path.getsize(file1)
-filesize2 = os.path.getsize(file2)
-
-print("Seleccione el archivo que desea enviar")
-print("Presione 1 para enviar el archivo de 100MB")
-print("Presione 2 para enviar el archivo de 250MB")
+print("¿Está listo para recibir el archivo? Presione 1 para confirmar o 0 para cancelar")
 input1 = int(input())
 
 if(input1==1):
-        filename = filename1
-        filesize = filesize1
-elif(input1==2):
-        filename = filename2
-        filesize = filesize2
+    message = b'Listo para recibir'
+    print('sending {!r}'.format(message))
+    sock.sendall(message)
 
-print(filename)
+elif(input1==0):
+        print("Se cancelará el proceso")
+
+
 try:
-
-    # Send data
-
-    sock.send(f"{filename}{SEPARATOR}{filesize}".encode())
-    #message = b'This is the message.  It will be repeated.'
-    print('sending {!r}'.format(filename))
-    #sock.sendall(message)
-
-    #amount_received = 0
-    #amount_expected = len()
-
-    #while amount_received < amount_expected:
-        #data = sock.recv(16)
-        #amount_received += len(data)
-        #print('received {!r}'.format(data))
-
-    # start sending the file
-    progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=1024)
-    with open(filename, "rb") as f:
+    print("recibido0")
+    # Recieve data
+    received = sock.recv(BUFFER_SIZE).decode()
+    print("recibido1")
+    filename, filesize = received.split(SEPARATOR)
+    # remove absolute path if there is
+    filename = os.path.basename(filename)
+    # convert to integer
+    filesize = int(filesize)
+    print("recibido2")
+    # start receiving the file from the socket
+    # and writing to the file stream
+    progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+    print("recibido3")
+    with open(filename, "wb") as f:
         while True:
-            # read the bytes from the file
-            bytes_read = f.read(BUFFER_SIZE)
+            print("recibido4")
+            # read 1024 bytes from the socket (receive)
+            bytes_read = sock.recv(BUFFER_SIZE)
             if not bytes_read:
+                # nothing is received
                 # file transmitting is done
                 break
-            # we use sendall to assure transimission in
-            # busy networks
-            sock.sendall(bytes_read)
+            # write to the file the bytes we just received
+            f.write(bytes_read)
+            print("recibido5")
             # update the progress bar
             progress.update(len(bytes_read))
+            print('received {!r}'.format(filename))
+            print("recibido6")
 
 
 finally:
