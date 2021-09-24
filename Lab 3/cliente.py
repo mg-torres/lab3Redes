@@ -24,9 +24,9 @@ BUFFER_SIZE = 1024 # send 4096 bytes each time step
 
 # Create a TCP/IP socket
 #TODO Organizar los puertos y la dircción
-sock = socket.create_connection(('localhost', 10015))
-#sock = socket.create_connection(('localhost', 10000))
-#sock = socket.create_connection(('localhost', 10000))
+sock = socket.create_connection(('localhost', 10008))
+#sock = socket.create_connection(('localhost', 10008))
+#sock = socket.create_connection(('localhost', 10008))
 #sock = socket.create_connection(('localhost', 10000))
 #sock = socket.create_connection(('localhost', 10000))
 
@@ -60,6 +60,8 @@ print('Type    :', types[sock.type])
 print('Protocol:', protocols[sock.proto])
 print()
 
+fin = False
+
 while True:
     print("¿Está listo para recibir el archivo? Presione 1 para confirmar o 0 para cancelar")
     input1 = int(input())
@@ -74,8 +76,6 @@ while True:
     print(received)
     filename = ""
     filesize = 0
-    if ('Finalizado' in received):
-        break
     if('SEPARATOR' in received):
         filename, filesize = received.split(SEPARATOR)
         # remove absolute path if there is
@@ -83,7 +83,7 @@ while True:
         # convert to integer
         filesize = int(filesize)
     try:
-        progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+        #progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
         with open(filename, "w") as f:
             while True:
                 # read 1024 bytes from the socket (receive)
@@ -91,13 +91,17 @@ while True:
                 if not bytes_read:
                     # nothing is received
                     # file transmitting is done
+                    fin = True
+                    print("no bytes")
                     break
                 # write to the file the bytes we just received
                 f.write(bytes_read.decode('ISO-8859-1'))
                 # update the progress bar
-                progress.update(len(bytes_read))
+                #progress.update(len(bytes_read))
                 print('received {!r}'.format(filename))
     finally:
         f.close()
         print('closing socket')
         sock.close()
+        if (fin):
+            break
