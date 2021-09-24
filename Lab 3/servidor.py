@@ -1,36 +1,5 @@
 import socket
 import sys
-import tqdm
-import os
-
-
-def get_constants(prefix):
-    """Create a dictionary mapping socket module
-    constants to their names.
-    """
-    return {
-        getattr(socket, n): n
-        for n in dir(socket)
-        if n.startswith(prefix)
-    }
-
-
-families = get_constants('AF_')
-types = get_constants('SOCK_')
-protocols = get_constants('IPPROTO_')
-
-SEPARATOR = "<SEPARATOR>"
-BUFFER_SIZE = 4096 # send 4096 bytes each time step
-
-# Create a TCP/IP socket
-#TODO Organizar los puertos y la dircción
-sock = socket.create_connection(('localhost', 10002))
-#sock = socket.create_connection(('localhost', 10000))
-#sock = socket.create_connection(('localhost', 10000))
-#sock = socket.create_connection(('localhost', 10000))
-#sock = socket.create_conn…
-[5:51 p. m., 23/9/2021] Maria Gabriela Torres 🦀: import socket
-import sys
 import os
 
 # Create a TCP/IP socket
@@ -102,3 +71,5 @@ while True:
                 print("archivo conexiones")
     finally:
         connection.close()
+
+
