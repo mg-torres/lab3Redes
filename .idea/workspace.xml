@@ -3,6 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="62516011-6b0b-4445-bc4e-2e819f373206" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Lab 3/Archivos/PRUEBA.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Lab 3/Archivos/PRUEBA.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Lab 3/cliente.py" beforeDir="false" afterPath="$PROJECT_DIR$/Lab 3/cliente.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Lab 3/servidor.py" beforeDir="false" afterPath="$PROJECT_DIR$/Lab 3/servidor.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -12,6 +14,14 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="ProjectId" id="1yBWhIy2jJKraJ8OdCfHqgLAt8r" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -95,5 +105,16 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Lab 3/servidor.py</url>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

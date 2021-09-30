@@ -1,15 +1,16 @@
 import socket
-import sys
 import os
 import logging
 from datetime import datetime
 import hashlib
+import threading
+import time
 
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Bind the socket to the address given on the command line
-server_address = ('', 10008)
+server_address = ('', 10007)
 sock.bind(server_address)
 print('starting up on {} port {}'.format(*sock.getsockname()))
 sock.listen(25)
@@ -42,48 +43,69 @@ LOG_FILENAME = datetime.now().strftime('D:/log/logfile_%Y_%m_%d_%H_%M_%S.log')
 fin = False;
 
 #Función envío de archivos
-def archivo(connections, num_archivo):
+def archivo(num_archivo, c):
     if (num_archivo == 1):
         success = True
-        for c in connections:
-            start_time = datetime.now()
-            c.send(f"{filename1}{SEPARATOR}{filesize1}".encode())
-            md5(c, file1)
-            with open(file1, "rb") as f:
-                while True:
-                    bytes_read = f.read(1024)
-                    if not bytes_read:
-                        end_time = datetime.now()
-                        time = end_time - start_time
-                        tiempos.append(time)
-                        break
-                    c.send(bytes_read)
-        log(filename1, filesize1, success, tiempos)
-        fin = True
+        start_time = datetime.now()
+        c.send(f"{filename1}{SEPARATOR}{filesize1}".encode())
+        print(filesize1)
+        with open(file1, "rb") as f:
+            while True:
+                bytes_read = f.read(1024)
+                if not bytes_read:
+                    end_time = datetime.now()
+                    time = end_time - start_time
+                    tiempos.append(time)
+                    break
+                c.send(bytes_read)
+        message = b'Finaliza transmision'
+        c.send(message)
+        md5(c, file1)
+        #data = connection.recv(1024)
+        #mensaje2 = data.decode('utf-8')
+        #print(mensaje2)
+        #if ('Transmision no exitosa' == mensaje2):
+        #    success = False
+        #elif ('Transmision  exitosa' == mensaje2):
+        #    success = True
+        #log(filename1, filesize1, success, tiempos)
     elif (num_archivo == 2):
         success = True
-        for c in connections:
-            start_time = datetime.now()
-            c.send(f"{filename2}{SEPARATOR}{filesize2}".encode())
-            md5(c, file1)
-            with open(file2, "rb") as f:
-                while True:
-                    bytes_read = f.read(1024)
-                    if not bytes_read:
-                        end_time = datetime.now()
-                        time = end_time - start_time
-                        tiempos.append(time)
-                        break
-                    c.send(bytes_read)
-        log(filename1, filesize1, success, tiempos)
-        fin = True
+        start_time = datetime.now()
+        c.send(f"{filename2}{SEPARATOR}{filesize2}".encode())
+        with open(file2, "rb") as f:
+            while True:
+                bytes_read = f.read(1024)
+                if not bytes_read:
+                    end_time = datetime.now()
+                    time = end_time - start_time
+                    tiempos.append(time)
+                    break
+                c.send(bytes_read)
+        message = b'Finaliza transmision'
+        c.send(message)
+        md5(c, file2)
+        data = connection.recv(1024)
+        mensaje2 = data.decode('utf-8')
+        if ('Transmision no exitosa' == mensaje2):
+            success = False
+        elif ('Transmision  exitosa' == mensaje2):
+            success = True
+        #log(filename1, filesize1, success, tiempos)
 
 def md5(connection, fname):
-    hash_md5 = hashlib.md5()
-    with open(fname, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    connection.send(hash_md5.hexdigest().encode())
+    md5 = hashlib.md5()
+    sha1 = hashlib.sha1()
+    with open(fname, 'rb') as f:
+        while True:
+            data = f.read(1024)
+            if not data:
+                break
+            md5.update(data)
+            sha1.update(data)
+    print("MD5:{0}".format(md5.hexdigest()))
+    print("SHA1:{0}".format(sha1.hexdigest()))
+    connection.send(md5.hexdigest().encode('ISO-8859-1'))
 
 def log(filename, filesize, success, tiempos):
     logging.basicConfig(LOG_FILENAME, encoding='utf-8', level=logging.INFO)
@@ -100,9 +122,10 @@ def log(filename, filesize, success, tiempos):
         i+=1
     logging.info('Número de paquetes enviados:')
     logging.info('Valor total en bytes enviado: ')
+    print("terminado")
 
-
-while True:
+if __name__ == "__main__":
+ while True:
     conexiones = []
     tiempos = []
     print('waiting for a connection')
@@ -117,9 +140,14 @@ while True:
             if mensaje == ('Listo para recibir'):
                 conexiones.append(connection)
             if len(conexiones) >= num_clientes:
-                archivo(conexiones, num_archivo)
+                print(len(conexiones))
+                for c in conexiones:
+                    x = threading.Thread(target=archivo, args=(num_archivo, c, ))
+                    x.start()
+                    time.sleep(1)
+                fin = True
                 break
     finally:
         connection.close()
-    if fin:
-        break
+        if fin:
+            break
