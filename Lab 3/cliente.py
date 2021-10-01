@@ -32,6 +32,18 @@ success = False
 
 valormd5=0
 
+sock = socket.create_connection(('localhost', 10004))
+print('Family  :', families[sock.family])
+print('Type    :', types[sock.type])
+print('Protocol:', protocols[sock.proto])
+print()
+
+
+def concurrencia():
+    for i in range(25):
+        main()
+
+
 def md5(connection, fname,hashrecibido):
 
     md5 = hashlib.md5()
@@ -56,61 +68,62 @@ def md5(connection, fname,hashrecibido):
         sock.sendall(mssg)
 
 
-#def
-sock = socket.create_connection(('localhost', 10000))
-print('Family  :', families[sock.family])
-print('Type    :', types[sock.type])
-print('Protocol:', protocols[sock.proto])
-print()
-while True:
-    print("¿Está listo para recibir el archivo? Presione 1 para confirmar o 0 para cancelar")
-    input1 = int(input())
-    if (input1 == 1):
-        message = b'Listo para recibir'
-        print('sending {!r}'.format(message))
-        sock.sendall(message)
+def main():
 
-    elif (input1 == 0):
-        print("Se cancelará el proceso")
-    received = sock.recv(BUFFER_SIZE).decode('ISO-8859-1')
-    filename = ""
-    filesize = 0
-    if('SEPARATOR' in received):
-        filename, filesize = received.split(SEPARATOR)
-        filename= '/ArchivoRecibidos/'+filename
-        # remove absolute path if there is
-        filename = os.path.basename(filename)
-        var=os.path.join("./ArchivoRecibidos", filename)
-        print(var)
-        # convert to integer
-        print(filename)
-        filesize = int(filesize)
-    try:
-        #progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
-        with open(var, "w") as f:
-            while True:
-                # read 1024 bytes from the socket (receive)
-                bytes_read = sock.recv(BUFFER_SIZE)
-                if ('Finaliza transmision' in bytes_read.decode('ISO-8859-1')):
-                    break
-                # write to the file the bytes we just received
-                f.write(bytes_read.decode('ISO-8859-1'))
-                # update the progress bar
-                #progress.update(len(bytes_read))
-                print('received {!r}'.format(filename))
-    finally:
-        f.close()
+    while True:
+        print("¿Está listo para recibir el archivo? Presione 1 para confirmar o 0 para cancelar")
+        input1 = int(input())
+        if (input1 == 1):
+            message = b'Listo para recibir'
+            print('sending {!r}'.format(message))
+            sock.sendall(message)
+
+        elif (input1 == 0):
+            print("Se cancelará el proceso")
         received = sock.recv(BUFFER_SIZE).decode('ISO-8859-1')
-        print(received)
-        md5(sock,var, received)
-        #if (success):
-        #    message2 = b'Transmision exitosa'
-        #    sock.sendall(message2)
-        #else:
-        #    message2 = b'Transmision no exitosa'
-        #    sock.sendall(message2)
-        fin = True
-        print('closing socket')
-        sock.close()
-        if (fin):
-            break
+        filename = ""
+        filesize = 0
+        if('SEPARATOR' in received):
+            filename, filesize = received.split(SEPARATOR)
+            filename= '/ArchivoRecibidos/'+filename
+            # remove absolute path if there is
+            filename = os.path.basename(filename)
+            var=os.path.join("./ArchivoRecibidos", filename)
+            print(var)
+            # convert to integer
+            print(filename)
+            filesize = int(filesize)
+        try:
+            #progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+            with open(var, "w") as f:
+                while True:
+                    # read 1024 bytes from the socket (receive)
+                    bytes_read = sock.recv(BUFFER_SIZE)
+                    if ('Finaliza transmision' in bytes_read.decode('ISO-8859-1')):
+                        break
+                    # write to the file the bytes we just received
+                    f.write(bytes_read.decode('ISO-8859-1'))
+                    # update the progress bar
+                    #progress.update(len(bytes_read))
+                    print('received {!r}'.format(filename))
+        finally:
+            f.close()
+            received = sock.recv(BUFFER_SIZE).decode('ISO-8859-1')
+            print(received)
+            md5(sock,var, received)
+            #if (success):
+            #    message2 = b'Transmision exitosa'
+            #    sock.sendall(message2)
+            #else:
+            #    message2 = b'Transmision no exitosa'
+            #    sock.sendall(message2)
+            fin = True
+            print('closing socket')
+            sock.close()
+            if (fin):
+                break
+
+
+concurrencia()
+
+
