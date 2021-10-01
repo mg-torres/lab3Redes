@@ -3,7 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="62516011-6b0b-4445-bc4e-2e819f373206" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Lab 3/ArchivoRecibidos/PRUEBA.txt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Lab 3/Archivos/PRUEBA.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Lab 3/Archivos/PRUEBA.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Lab 3/PRUEBA.txt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Lab 3/cliente.py" beforeDir="false" afterPath="$PROJECT_DIR$/Lab 3/cliente.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Lab 3/servidor.py" beforeDir="false" afterPath="$PROJECT_DIR$/Lab 3/servidor.py" afterDir="false" />
     </list>
@@ -106,15 +108,5 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Lab 3/servidor.py</url>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

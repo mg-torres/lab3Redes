@@ -1,3 +1,4 @@
+
 import socket
 import os
 import hashlib
@@ -37,7 +38,7 @@ def md5(connection, fname,hashrecibido):
     sha1 = hashlib.sha1()
     with open(fname, 'rb') as f:
         while True:
-            data = f.read(1024)
+            data = f.read(BUFFER_SIZE)
             if not data:
                 break
             md5.update(data)
@@ -45,14 +46,18 @@ def md5(connection, fname,hashrecibido):
     print(format(md5.hexdigest()))
     print(hashrecibido)
 
-    if(format(md5.hexdigest())==hashrecibido):
-        print('Los valores son iguales')
+    if (format(md5.hexdigest()) == hashrecibido):
+        mssg = b'Los valores son iguales'
+        print(mssg)
+        sock.sendall(mssg)
     else:
-        print('Los valores son diferentes')
+        mssg = b'Los valores son diferentes'
+        print(mssg)
+        sock.sendall(mssg)
 
 
 #def
-sock = socket.create_connection(('localhost', 10007))
+sock = socket.create_connection(('localhost', 10000))
 print('Family  :', families[sock.family])
 print('Type    :', types[sock.type])
 print('Protocol:', protocols[sock.proto])

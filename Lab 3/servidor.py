@@ -10,7 +10,7 @@ import time
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Bind the socket to the address given on the command line
-server_address = ('', 10007)
+server_address = ('', 10000)
 sock.bind(server_address)
 print('starting up on {} port {}'.format(*sock.getsockname()))
 sock.listen(25)
@@ -20,11 +20,11 @@ SEPARATOR = "SEPARATOR"
 
 #Archivos a enviar
 file1 = "Archivos/PRUEBA.txt"
-file2 = "Archivos/Archivo2_250MB.pptx"
+file2 = "Archivos/archivo1.txt"
 
 #Nombre archivos a enviar
 filename1 = "PRUEBA.txt"
-filename2 = "Archivo2_250MB.pptx"
+filename2 = "archivo1.txt"
 
 #Tamaño de los archivos
 filesize1 = os.path.getsize(file1)
@@ -42,6 +42,8 @@ LOG_FILENAME = datetime.now().strftime('D:/log/logfile_%Y_%m_%d_%H_%M_%S.log')
 #Variable para cerrar servidor
 fin = False;
 
+BUFFER_SIZE = 1024
+
 #Función envío de archivos
 def archivo(num_archivo, c):
     if (num_archivo == 1):
@@ -51,7 +53,7 @@ def archivo(num_archivo, c):
         print(filesize1)
         with open(file1, "rb") as f:
             while True:
-                bytes_read = f.read(1024)
+                bytes_read = f.read(BUFFER_SIZE)
                 if not bytes_read:
                     end_time = datetime.now()
                     time = end_time - start_time
@@ -61,21 +63,19 @@ def archivo(num_archivo, c):
         message = b'Finaliza transmision'
         c.send(message)
         md5(c, file1)
-        #data = connection.recv(1024)
-        #mensaje2 = data.decode('utf-8')
-        #print(mensaje2)
-        #if ('Transmision no exitosa' == mensaje2):
-        #    success = False
-        #elif ('Transmision  exitosa' == mensaje2):
-        #    success = True
-        #log(filename1, filesize1, success, tiempos)
+        data = connection.recv(1024)
+        mensaje2 = data.decode('utf-8')
+        if ('Los valores son iguales' in mensaje2):
+            success = True
+        elif ('Los valores son diferentes' == mensaje2):
+            success = False
     elif (num_archivo == 2):
         success = True
         start_time = datetime.now()
         c.send(f"{filename2}{SEPARATOR}{filesize2}".encode())
         with open(file2, "rb") as f:
             while True:
-                bytes_read = f.read(1024)
+                bytes_read = f.read(BUFFER_SIZE)
                 if not bytes_read:
                     end_time = datetime.now()
                     time = end_time - start_time
@@ -87,18 +87,17 @@ def archivo(num_archivo, c):
         md5(c, file2)
         data = connection.recv(1024)
         mensaje2 = data.decode('utf-8')
-        if ('Transmision no exitosa' == mensaje2):
-            success = False
-        elif ('Transmision  exitosa' == mensaje2):
+        if ('Los valores son iguales' in mensaje2):
             success = True
-        #log(filename1, filesize1, success, tiempos)
+        elif ('Los valores son diferentes' == mensaje2):
+            success = False
 
 def md5(connection, fname):
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
     with open(fname, 'rb') as f:
         while True:
-            data = f.read(1024)
+            data = f.read(BUFFER_SIZE)
             if not data:
                 break
             md5.update(data)
@@ -108,21 +107,21 @@ def md5(connection, fname):
     connection.send(md5.hexdigest().encode('ISO-8859-1'))
 
 def log(filename, filesize, success, tiempos):
-    logging.basicConfig(LOG_FILENAME, encoding='utf-8', level=logging.INFO)
+    logging.basicConfig(filename = LOG_FILENAME, encoding='utf-8', level=logging.INFO)
     logging.info('Nombre archivo:' + filename)
-    logging.info('Tamaño archivo:' + filesize)
-    if (success):
-        logging.info('Archivo fue entregado exitosamente')
-    else:
-        logging.info('Archivo no fue entregado exitosamente')
-    logging.info('Archivo fue entregado exitosamente')
-    i=1
-    for t in tiempos:
-        logging.info('Tiempo de transferencia archivo # ' + i + ': '+ t + " milisegundos")
-        i+=1
-    logging.info('Número de paquetes enviados:')
-    logging.info('Valor total en bytes enviado: ')
+    logging.info('Tamaño archivo:' + str(filesize))
+    i = 1;
+    for c in conexiones:
+        logging.info('Cliente ' + str(i))
+        if (success):
+            logging.info('Archivo fue entregado exitosamente')
+        else:
+            logging.info('Archivo no fue entregado exitosamente')
+        for t in tiempos:
+            logging.info('Tiempo de transferencia archivo cliente ' + str(i) + ': '+ str(t) + " milisegundos")
+        i += 1
     print("terminado")
+    return filename
 
 if __name__ == "__main__":
  while True:
@@ -134,7 +133,7 @@ if __name__ == "__main__":
     connection, client_address = sock.accept()
     try:
         while True:
-            data = connection.recv(1024)
+            data = connection.recv(BUFFER_SIZE)
             print('received {!r}'.format(data))
             mensaje=data.decode('utf-8')
             if mensaje == ('Listo para recibir'):
@@ -148,6 +147,9 @@ if __name__ == "__main__":
                 fin = True
                 break
     finally:
+        #filename = log(filename1, filesize1, True, tiempos)
+        #var = os.path.join("./Logs", filename)
+        #print(var)
         connection.close()
         if fin:
             break
