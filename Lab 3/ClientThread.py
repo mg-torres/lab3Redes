@@ -14,7 +14,7 @@ SEPARATOR = "SEPARATOR"
 BUFFER_SIZE = 1024
 
 #Nombre log
-LOG_FILENAME = datetime.now().strftime('%Y_%m_%d_%H_%M_%S_CLI.log')
+LOG_FILENAME = datetime.now().strftime('./Logs/%Y_%m_%d_%H_%M_%S_CLI.log')
 
 #Array vacio de conecciones
 conexiones = []
@@ -22,15 +22,19 @@ conexiones = []
 #Array vacio con tiempos de entrega del archivo
 tiempos = []
 
+#Array vacio con variable que indica si la transmisión fue exitosa o no
+exitos = []
+
 #Variable para cerrar conexiones
 fin = False
 
-success = True
-filenameF = ''
-filesizeF = 0
+filenames = []
+filesizes = []
 
 #Función de creación y envío de hash
 def md5(connection, fname, hashrecibido):
+    mssg = ''
+    exito = 0
     md5 = hashlib.md5()
     with open(fname, 'rb') as f:
         while True:
@@ -38,30 +42,29 @@ def md5(connection, fname, hashrecibido):
             if not data:
                 break
             md5.update(data)
-
     if (format(md5.hexdigest()) == hashrecibido):
         mssg = b'Los valores son iguales'
-        connection.send(mssg)
+        exito = 1
     else:
         mssg = b'Los valores son diferentes'
-        connection.send(mssg)
+        exito = 0
+    exitos.append(exito)
+    connection.send(mssg)
 
 #Función para crear el log
-def log(filenamePrueba, filesizePrueba, success, tiempos):
+def log(filenames, filesizes, exitos, tiempos):
     filename = LOG_FILENAME
     logging.basicConfig(filename = filename, encoding='utf-8', level=logging.INFO)
-    logging.info('Nombre archivo:' + filenamePrueba)
-    logging.info('Tamaño archivo:' + str(filesizePrueba))
+    logging.info('Nombre archivo:' + filenames[0])
+    logging.info('Tamaño archivo:' + str(filesizes[0]))
     i = 1
     for c in conexiones:
         logging.info('Cliente ' + str(i))
-        if (success):
+        if (exitos[i-1] == 1):
             logging.info('Archivo fue entregado exitosamente')
         else:
             logging.info('Archivo no fue entregado exitosamente')
-        for t in tiempos:
-            if (tiempos.index(t) == i-1):
-                logging.info('Tiempo de transferencia archivo cliente ' + str(i) + ': '+ str(t) + " milisegundos")
+        logging.info('Tiempo de transferencia archivo cliente ' + str(i) + ': '+ str(tiempos[i-1]) + " milisegundos")
         i += 1
     return filename
 
@@ -79,6 +82,8 @@ def createSocket(i, num_clientes):
             newFilename = os.path.basename(newFilename)
             var=os.path.join("./ArchivoRecibidos", newFilename)
             filesizeF = int(filesizeF)
+            filenames.append(filenameF)
+            filesizes.append(filesizeF)
         try:
             start_time = datetime.now()
             with open(var, "w") as f:
@@ -116,8 +121,6 @@ if __name__ == "__main__":
                 fin = True
                 break
         finally:
-            filenameLog = log(filenameF, filesizeF, success, tiempos)
-            filenameLog = os.path.basename(filenameLog)
-            var = os.path.join("./LogsCliente", filenameLog)
+            filenameLog = log(filenames, filesizes, exitos, tiempos)
             if fin:
                 break

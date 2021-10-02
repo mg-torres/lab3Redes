@@ -36,14 +36,18 @@ conexiones = []
 #Array vacio con tiempos de entrega del archivo
 tiempos = []
 
+#Array vacio con variable que indica si la transmisión fue exitosa o no
+exitos = []
+
 #Nombre log
-LOG_FILENAME = datetime.now().strftime('%Y_%m_%d_%H_%M_%S.log')
+LOG_FILENAME = datetime.now().strftime('./Logs/%Y_%m_%d_%H_%M_%S.log')
 
 #Variable para cerrar servidor
 fin = False
 
 #Tamaño del buffer
 BUFFER_SIZE = 1024
+
 
 #Función envío de archivos
 def archivo(num_archivo, c):
@@ -72,15 +76,6 @@ def archivo(num_archivo, c):
     message = b'Finaliza transmision'
     c.send(message)
     md5(c, arch)
-    data = connection.recv(BUFFER_SIZE)
-    mensaje2 = data.decode('ISO-8859-1')
-    print(mensaje2)
-    exito = 0
-    if ('Los valores son iguales' in mensaje2):
-        exito = 1
-    elif ('Los valores son diferentes' in mensaje2):
-        exito = 0
-    exitos.append(exito)
 
 #Función de creación y envío de hash
 def md5(connection, fname):
@@ -92,6 +87,14 @@ def md5(connection, fname):
                 break
             md5.update(data)
     connection.send(md5.hexdigest().encode('ISO-8859-1'))
+    data = connection.recv(BUFFER_SIZE)
+    mensaje2 = data.decode('utf-8')
+    exito = 0
+    if ('Los valores son iguales' in mensaje2):
+        exito = 1
+    elif ('Los valores son diferentes' in mensaje2):
+        exito = 0
+    exitos.append(exito)
 
 #Función para crear el log
 def log(filenameF, filesize, exitos, tiempos):
@@ -102,24 +105,16 @@ def log(filenameF, filesize, exitos, tiempos):
     i = 1
     for c in conexiones:
         logging.info('Cliente ' + str(i))
-        for e in exitos:
-            if (exitos.index(e) == i-1):
-                if (e==1):
-                    logging.info('Archivo fue entregado exitosamente')
-                else:
-                    logging.info('Archivo no fue entregado exitosamente')
-        for t in tiempos:
-            if (tiempos.index(t) == i-1):
-                logging.info('Tiempo de transferencia archivo cliente ' + str(i) + ': '+ str(t) + " milisegundos")
+        if (exitos[i-1] == 1):
+            logging.info('Archivo fue entregado exitosamente')
+        else:
+            logging.info('Archivo no fue entregado exitosamente')
+        logging.info('Tiempo de transferencia archivo cliente ' + str(i) + ': '+ str(tiempos[i-1]) + " milisegundos")
         i += 1
     return filename
 
 if __name__ == "__main__":
  while True:
-    success = True
-    conexiones = []
-    tiempos = []
-    exitos = []
     threads = []
     print('waiting for a connection')
     num_archivo = int(input('¿Qué archivo desea enviar? (1: 100MB, 2: 250MB)'))
@@ -137,7 +132,7 @@ if __name__ == "__main__":
             connection, client_address = sock.accept()
             data = connection.recv(BUFFER_SIZE)
             print('received {!r}'.format(data))
-            mensaje=data.decode('ISO-8859-1')
+            mensaje = data.decode('utf-8')
             if mensaje == ('Listo para recibir'):
                 conexiones.append(connection)
             if len(conexiones) >= num_clientes:
@@ -152,8 +147,6 @@ if __name__ == "__main__":
                 break
     finally:
         filename = log(nomArchivo, tamArchivo, exitos, tiempos)
-        filename = os.path.basename(filename)
-        var = os.path.join("./LogsServidor", filename)
         connection.close()
         if fin:
             break
