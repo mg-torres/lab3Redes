@@ -10,7 +10,7 @@ import time
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Bind the socket to the address given on the command line
-server_address = ('', 10004)
+server_address = ('', 10000)
 sock.bind(server_address)
 print('starting up on {} port {}'.format(*sock.getsockname()))
 sock.listen(25)
@@ -37,7 +37,7 @@ conexiones = []
 tiempos = []
 
 #Nombre log
-LOG_FILENAME = datetime.now().strftime('D:/log/logfile_%Y_%m_%d_%H_%M_%S.log')
+LOG_FILENAME = datetime.now().strftime('%Y_%m_%d_%H_%M_%S.log')
 
 #Variable para cerrar servidor
 fin = False;
@@ -47,7 +47,6 @@ BUFFER_SIZE = 1024
 #Función envío de archivos
 def archivo(num_archivo, c):
     if (num_archivo == 1):
-        success = True
         start_time = datetime.now()
         c.send(f"{filename1}{SEPARATOR}{filesize1}".encode())
         print(filesize1)
@@ -56,10 +55,11 @@ def archivo(num_archivo, c):
                 bytes_read = f.read(BUFFER_SIZE)
                 if not bytes_read:
                     end_time = datetime.now()
-                    time = end_time - start_time
-                    tiempos.append(time)
+                    tiempo = end_time - start_time
+                    tiempos.append(tiempo)
                     break
                 c.send(bytes_read)
+
         message = b'Finaliza transmision'
         c.send(message)
         md5(c, file1)
@@ -70,7 +70,6 @@ def archivo(num_archivo, c):
         elif ('Los valores son diferentes' == mensaje2):
             success = False
     elif (num_archivo == 2):
-        success = True
         start_time = datetime.now()
         c.send(f"{filename2}{SEPARATOR}{filesize2}".encode())
         with open(file2, "rb") as f:
@@ -78,8 +77,9 @@ def archivo(num_archivo, c):
                 bytes_read = f.read(BUFFER_SIZE)
                 if not bytes_read:
                     end_time = datetime.now()
-                    time = end_time - start_time
-                    tiempos.append(time)
+                    tiempo = end_time - start_time
+                    tiempos.append(tiempo)
+                    print(tiempo)
                     break
                 c.send(bytes_read)
         message = b'Finaliza transmision'
@@ -110,7 +110,7 @@ def log(filename, filesize, success, tiempos):
     logging.basicConfig(filename = LOG_FILENAME, encoding='utf-8', level=logging.INFO)
     logging.info('Nombre archivo:' + filename)
     logging.info('Tamaño archivo:' + str(filesize))
-    i = 1;
+    i = 1
     for c in conexiones:
         logging.info('Cliente ' + str(i))
         if (success):
@@ -118,21 +118,23 @@ def log(filename, filesize, success, tiempos):
         else:
             logging.info('Archivo no fue entregado exitosamente')
         for t in tiempos:
-            logging.info('Tiempo de transferencia archivo cliente ' + str(i) + ': '+ str(t) + " milisegundos")
+            if (tiempos.index(t) == i-1):
+                logging.info('Tiempo de transferencia archivo cliente ' + str(i) + ': '+ str(t) + " milisegundos")
         i += 1
     print("terminado")
     return filename
 
 if __name__ == "__main__":
  while True:
+    success = True
     conexiones = []
     tiempos = []
     print('waiting for a connection')
     num_archivo = int(input('¿Qué archivo desea enviar? (1: 100MB, 2: 250MB)'))
     num_clientes = int(input('¿A cuantos clientes desea enviar el archivo?'))
-    connection, client_address = sock.accept()
     try:
         while True:
+            connection, client_address = sock.accept()
             data = connection.recv(BUFFER_SIZE)
             print('received {!r}'.format(data))
             mensaje=data.decode('utf-8')
@@ -147,9 +149,9 @@ if __name__ == "__main__":
                 fin = True
                 break
     finally:
-        #filename = log(filename1, filesize1, True, tiempos)
-        #var = os.path.join("./Logs", filename)
-        #print(var)
+        filename = log(filename1, filesize1, success, tiempos)
+        filename = os.path.basename(filename)
+        var = os.path.join("./Logs", filename)
         connection.close()
         if fin:
             break
