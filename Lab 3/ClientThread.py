@@ -2,97 +2,100 @@ import socket
 import os
 import hashlib
 import time
-from concurrent.futures import ThreadPoolExecutor
 import threading
+import logging
+from datetime import datetime
 
-def get_constants(prefix):
-    """Create a dictionary mapping socket module
-    constants to their names.
-    """
-    return {
-        getattr(socket, n): n
-        for n in dir(socket)
-        if n.startswith(prefix)
-    }
-
-
-families = get_constants('AF_')
-types = get_constants('SOCK_')
-protocols = get_constants('IPPROTO_')
-
+#Separador
 SEPARATOR = "SEPARATOR"
-BUFFER_SIZE = 1024 # send 4096 bytes each time step
 
-# Create a TCP/IP socket
-#TODO Organizar los puertos y la dircción
+#Tamaño del buffer
+BUFFER_SIZE = 1024
 
+#Nombre log
+LOG_FILENAME = datetime.now().strftime('%Y_%m_%d_%H_%M_%S_CLI.log')
 
+#Array vacio de conecciones
+conexiones = []
 
+#Array vacio con tiempos de entrega del archivo
+tiempos = []
 
+#Variable para cerrar conexiones
 fin = False
 
-def md5(connection, fname,hashrecibido):
+success = True
+filenameF = ''
+filesizeF = 0
 
+#Función de creación y envío de hash
+def md5(connection, fname, hashrecibido):
     md5 = hashlib.md5()
-    sha1 = hashlib.sha1()
     with open(fname, 'rb') as f:
         while True:
             data = f.read(BUFFER_SIZE)
             if not data:
                 break
             md5.update(data)
-            sha1.update(data)
-    print(md5.hexdigest())
-    print(hashrecibido)
 
     if (format(md5.hexdigest()) == hashrecibido):
         mssg = b'Los valores son iguales'
-        print(mssg)
+        success = True
         connection.send(mssg)
     else:
         mssg = b'Los valores son diferentes'
-        print(mssg)
+        success = False
         connection.send(mssg)
 
-def createSocket(i):
+#Función para crear el log
+def log(filenamePrueba, filesizePrueba, success, tiempos):
+    filename = LOG_FILENAME
+    logging.basicConfig(filename = filename, encoding='utf-8', level=logging.INFO)
+    logging.info('Nombre archivo:' + filenamePrueba)
+    logging.info('Tamaño archivo:' + str(filesizePrueba))
+    i = 1
+    print(len(tiempos))
+    for c in conexiones:
+        logging.info('Cliente ' + str(i))
+        if (success):
+            logging.info('Archivo fue entregado exitosamente')
+        else:
+            logging.info('Archivo no fue entregado exitosamente')
+        for t in tiempos:
+            if (tiempos.index(t) == i-1):
+                logging.info('Tiempo de transferencia archivo cliente ' + str(i) + ': '+ str(t) + " milisegundos")
+        i += 1
+    return filename
+
+#Función para crear los clientes
+def createSocket(i, num_clientes):
     sock = socket.create_connection(('localhost', 10000))
+    conexiones.append(i)
     while True:
-        #print("¿Está listo para recibir el archivo? Presione 1 para confirmar o 0 para cancelar")
-        #input1 = int(input())
-        #if (input1 == 1):
         message = b'Listo para recibir'
         sock.send(message)
-
-        #elif (input1 == 0):
-        #    print("Se cancelará el proceso")
         received = sock.recv(BUFFER_SIZE).decode('ISO-8859-1')
-        filename = ""
-        filesize = 0
         if('SEPARATOR' in received):
-            filename, filesize = received.split(SEPARATOR)
-            filename= str(i) + filename
-            # remove absolute path if there is
-            filename = os.path.basename(filename)
-            var=os.path.join("./ArchivoRecibidos", filename)
-            # convert to integer
-            print(filesize)
-            filesize = int(filesize)
+            filenameF, filesizeF = received.split(SEPARATOR)
+            newFilename = 'Cliente'+str(i+1)+'-Prueba'+str(num_clientes)+'.txt'
+            newFilename = os.path.basename(newFilename)
+            var=os.path.join("./ArchivoRecibidos", newFilename)
+            filesizeF = int(filesizeF)
         try:
-            #progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+            start_time = datetime.now()
             with open(var, "w") as f:
                 while True:
-                    # read 1024 bytes from the socket (receive)
                     bytes_read = sock.recv(BUFFER_SIZE)
                     if ('Finaliza transmision' in bytes_read.decode('ISO-8859-1')):
+                        end_time = datetime.now()
+                        tiempo = end_time - start_time
+                        tiempos.append(tiempo)
                         break
-                    # write to the file the bytes we just received
                     f.write(bytes_read.decode('ISO-8859-1'))
-                    # update the progress bar
-                    #progress.update(len(bytes_read))
         finally:
             f.close()
             received = sock.recv(BUFFER_SIZE).decode('ISO-8859-1')
-            md5(sock,var, received)
+            md5(sock,var,received)
             fin = True
             print('closing socket')
             sock.close()
@@ -100,8 +103,20 @@ def createSocket(i):
                 break
 
 if __name__ == "__main__":
-
-    for i in range (2):
-        x = threading.Thread(target=createSocket, args=(i, ))
-        time.sleep(1)
-        x.start()
+    while True:
+        num_clientes = int(input('¿Cuantos clientes recibirán el archivo?'))
+        try:
+            while True:
+                for i in range (num_clientes):
+                    fin = False
+                    x = threading.Thread(target=createSocket, args=(i, num_clientes))
+                    x.start()
+                    time.sleep(1)
+                if (fin):
+                    break
+        finally:
+            filenameLog = log(filenameF, filesizeF, success, tiempos)
+            filenameLog = os.path.basename(filenameLog)
+            var = os.path.join("./LogsCliente", filenameLog)
+            if (fin):
+                break
