@@ -108,12 +108,11 @@ if __name__ == "__main__":
         try:
             while True:
                 for i in range (num_clientes):
-                    fin = False
                     x = threading.Thread(target=createSocket, args=(i, num_clientes))
                     x.start()
                     time.sleep(1)
-                if (fin):
-                    break
+                fin=True
+                break
         finally:
             filenameLog = log(filenameF, filesizeF, success, tiempos)
             filenameLog = os.path.basename(filenameLog)
