@@ -72,12 +72,15 @@ def archivo(num_archivo, c):
     message = b'Finaliza transmision'
     c.send(message)
     md5(c, arch)
-    data = connection.recv(1024)
-    mensaje2 = data.decode('utf-8')
+    data = connection.recv(BUFFER_SIZE)
+    mensaje2 = data.decode('ISO-8859-1')
+    print(mensaje2)
+    exito = 0
     if ('Los valores son iguales' in mensaje2):
-        success = True
-    elif ('Los valores son diferentes' == mensaje2):
-        success = False
+        exito = 1
+    elif ('Los valores son diferentes' in mensaje2):
+        exito = 0
+    exitos.append(exito)
 
 #Función de creación y envío de hash
 def md5(connection, fname):
@@ -91,7 +94,7 @@ def md5(connection, fname):
     connection.send(md5.hexdigest().encode('ISO-8859-1'))
 
 #Función para crear el log
-def log(filenameF, filesize, success, tiempos):
+def log(filenameF, filesize, exitos, tiempos):
     filename = LOG_FILENAME
     logging.basicConfig(filename = filename, encoding='utf-8', level=logging.INFO)
     logging.info('Nombre archivo:' + filenameF)
@@ -99,10 +102,12 @@ def log(filenameF, filesize, success, tiempos):
     i = 1
     for c in conexiones:
         logging.info('Cliente ' + str(i))
-        if (success):
-            logging.info('Archivo fue entregado exitosamente')
-        else:
-            logging.info('Archivo no fue entregado exitosamente')
+        for e in exitos:
+            if (exitos.index(e) == i-1):
+                if (e==1):
+                    logging.info('Archivo fue entregado exitosamente')
+                else:
+                    logging.info('Archivo no fue entregado exitosamente')
         for t in tiempos:
             if (tiempos.index(t) == i-1):
                 logging.info('Tiempo de transferencia archivo cliente ' + str(i) + ': '+ str(t) + " milisegundos")
@@ -114,15 +119,25 @@ if __name__ == "__main__":
     success = True
     conexiones = []
     tiempos = []
+    exitos = []
+    threads = []
     print('waiting for a connection')
     num_archivo = int(input('¿Qué archivo desea enviar? (1: 100MB, 2: 250MB)'))
     num_clientes = int(input('¿A cuantos clientes desea enviar el archivo?'))
+    nomArchivo = ''
+    tamArchivo = 0
+    if (num_archivo == 1):
+        nomArchivo = filename1
+        tamArchivo = filesize1
+    elif (num_archivo == 2):
+        nomArchivo = filename2
+        tamArchivo = filesize2
     try:
         while True:
             connection, client_address = sock.accept()
             data = connection.recv(BUFFER_SIZE)
             print('received {!r}'.format(data))
-            mensaje=data.decode('utf-8')
+            mensaje=data.decode('ISO-8859-1')
             if mensaje == ('Listo para recibir'):
                 conexiones.append(connection)
             if len(conexiones) >= num_clientes:
@@ -130,18 +145,13 @@ if __name__ == "__main__":
                     x = threading.Thread(target=archivo, args=(num_archivo, c, ))
                     x.start()
                     time.sleep(1)
+                    threads.append(x)
+                for x in threads:
+                    x.join()
                 fin = True
                 break
     finally:
-        nomArchivo = ''
-        tamArchivo = 0
-        if (num_archivo == 1):
-            nomArchivo = filename1
-            tamArchivo = filesize1
-        elif (num_archivo == 2):
-            nomArchivo = filename2
-            tamArchivo = filesize2
-        filename = log(nomArchivo, tamArchivo, success, tiempos)
+        filename = log(nomArchivo, tamArchivo, exitos, tiempos)
         filename = os.path.basename(filename)
         var = os.path.join("./LogsServidor", filename)
         connection.close()

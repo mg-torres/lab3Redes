@@ -1,3 +1,4 @@
+
 import socket
 import os
 import hashlib
@@ -40,11 +41,9 @@ def md5(connection, fname, hashrecibido):
 
     if (format(md5.hexdigest()) == hashrecibido):
         mssg = b'Los valores son iguales'
-        success = True
         connection.send(mssg)
     else:
         mssg = b'Los valores son diferentes'
-        success = False
         connection.send(mssg)
 
 #Función para crear el log
@@ -54,7 +53,6 @@ def log(filenamePrueba, filesizePrueba, success, tiempos):
     logging.info('Nombre archivo:' + filenamePrueba)
     logging.info('Tamaño archivo:' + str(filesizePrueba))
     i = 1
-    print(len(tiempos))
     for c in conexiones:
         logging.info('Cliente ' + str(i))
         if (success):
@@ -104,18 +102,22 @@ def createSocket(i, num_clientes):
 
 if __name__ == "__main__":
     while True:
+        threads = []
         num_clientes = int(input('¿Cuantos clientes recibirán el archivo?'))
         try:
             while True:
                 for i in range (num_clientes):
                     x = threading.Thread(target=createSocket, args=(i, num_clientes))
-                    x.start()
                     time.sleep(1)
-                fin=True
+                    x.start()
+                    threads.append(x)
+                for x in threads:
+                    x.join()
+                fin = True
                 break
         finally:
             filenameLog = log(filenameF, filesizeF, success, tiempos)
             filenameLog = os.path.basename(filenameLog)
             var = os.path.join("./LogsCliente", filenameLog)
-            if (fin):
+            if fin:
                 break
